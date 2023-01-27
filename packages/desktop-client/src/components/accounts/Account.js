@@ -47,8 +47,8 @@ import {
   useSelectedItems
 } from 'loot-design/src/components/useSelected';
 import { styles, colors } from 'loot-design/src/style';
+import Loading from 'loot-design/src/svg/AnimatedLoading';
 import Add from 'loot-design/src/svg/v1/Add';
-import Loading from 'loot-design/src/svg/v1/AnimatedLoading';
 import DotsHorizontalTriple from 'loot-design/src/svg/v1/DotsHorizontalTriple';
 import ArrowButtonRight1 from 'loot-design/src/svg/v2/ArrowButtonRight1';
 import ArrowsExpand3 from 'loot-design/src/svg/v2/ArrowsExpand3';
@@ -61,6 +61,7 @@ import SearchAlternate from 'loot-design/src/svg/v2/SearchAlternate';
 import { authorizeBank } from '../../plaid';
 import { useActiveLocation } from '../ActiveLocation';
 import AnimatedRefresh from '../AnimatedRefresh';
+
 import { FilterButton, AppliedFilters } from './Filters';
 import TransactionList from './TransactionList';
 import {
@@ -177,7 +178,7 @@ function ReconcilingMessage({
         {targetDiff !== 0 && (
           <View style={{ marginLeft: 15 }}>
             <Button onClick={() => onCreateTransaction(targetDiff)}>
-              Create Reconciliation Transation
+              Create Reconciliation Transaction
             </Button>
           </View>
         )}
