@@ -1,13 +1,31 @@
-import React, { useState, useEffect, useRef, useContext } from 'react';
+import React, {
+  createContext,
+  useState,
+  useEffect,
+  useRef,
+  useContext,
+} from 'react';
 import { connect } from 'react-redux';
-import { Switch, Route, withRouter } from 'react-router-dom';
+import { Switch, Route, useLocation, useHistory } from 'react-router-dom';
 
 import { css, media } from 'glamor';
 
 import * as actions from 'loot-core/src/client/actions';
-import Platform from 'loot-core/src/client/platform';
+import * as Platform from 'loot-core/src/client/platform';
 import * as queries from 'loot-core/src/client/queries';
 import { listen } from 'loot-core/src/platform/client/fetch';
+
+import useFeatureFlag from '../hooks/useFeatureFlag';
+import ArrowLeft from '../icons/v1/ArrowLeft';
+import AlertTriangle from '../icons/v2/AlertTriangle';
+import NavigationMenu from '../icons/v2/NavigationMenu';
+import { useResponsive } from '../ResponsiveProvider';
+import { colors } from '../style';
+import tokens from '../tokens';
+
+import AccountSyncCheck from './accounts/AccountSyncCheck';
+import AnimatedRefresh from './AnimatedRefresh';
+import { MonthCountSelector } from './budget/MonthCountSelector';
 import {
   View,
   Text,
@@ -15,25 +33,14 @@ import {
   Button,
   ButtonWithLoading,
   Tooltip,
-  P
-} from 'loot-design/src/components/common';
-import SheetValue from 'loot-design/src/components/spreadsheet/SheetValue';
-import { colors } from 'loot-design/src/style';
-import ArrowLeft from 'loot-design/src/svg/v1/ArrowLeft';
-import AlertTriangle from 'loot-design/src/svg/v2/AlertTriangle';
-import ArrowButtonRight1 from 'loot-design/src/svg/v2/ArrowButtonRight1';
-import NavigationMenu from 'loot-design/src/svg/v2/NavigationMenu';
-import tokens from 'loot-design/src/tokens';
-
-import { useServerURL } from '../hooks/useServerURL';
-
-import AccountSyncCheck from './accounts/AccountSyncCheck';
-import AnimatedRefresh from './AnimatedRefresh';
-import { MonthCountSelector } from './budget/MonthCountSelector';
+  P,
+} from './common';
 import { useSidebar } from './FloatableSidebar';
 import LoggedInUser from './LoggedInUser';
+import { useServerURL } from './ServerContext';
+import SheetValue from './spreadsheet/SheetValue';
 
-export let TitlebarContext = React.createContext();
+export let TitlebarContext = createContext();
 
 export function TitlebarProvider({ children }) {
   let listeners = useRef([]);
@@ -128,9 +135,9 @@ export function SyncButton({ localPrefs, style, onSync }) {
                 syncState === 'offline' ||
                 syncState === 'local'
               ? colors.n9
-              : null
+              : null,
         },
-        media(`(min-width: ${tokens.breakpoint_medium})`, {
+        media(`(min-width: ${tokens.breakpoint_small})`, {
           color:
             syncState === 'error'
               ? colors.r4
@@ -138,8 +145,8 @@ export function SyncButton({ localPrefs, style, onSync }) {
                 syncState === 'offline' ||
                 syncState === 'local'
               ? colors.n6
-              : null
-        })
+              : null,
+        }),
       )}
       onClick={onSync}
     >
@@ -164,7 +171,7 @@ function BudgetTitlebar({ globalPrefs, saveGlobalPrefs, localPrefs }) {
   let [loading, setLoading] = useState(false);
   let [showTooltip, setShowTooltip] = useState(false);
 
-  let reportBudgetEnabled = localPrefs['flags.reportBudget'];
+  const reportBudgetEnabled = useFeatureFlag('reportBudget');
 
   function onSwitchType() {
     setLoading(true);
@@ -192,7 +199,7 @@ function BudgetTitlebar({ globalPrefs, saveGlobalPrefs, localPrefs }) {
             loading={loading}
             style={{
               alignSelf: 'flex-start',
-              padding: '4px 7px'
+              padding: '4px 7px',
             }}
             title="Learn more about budgeting"
             onClick={() => setShowTooltip(true)}
@@ -205,7 +212,7 @@ function BudgetTitlebar({ globalPrefs, saveGlobalPrefs, localPrefs }) {
               onClose={() => setShowTooltip(false)}
               style={{
                 padding: 10,
-                maxWidth: 400
+                maxWidth: 400,
               }}
             >
               <P>
@@ -231,11 +238,12 @@ function BudgetTitlebar({ globalPrefs, saveGlobalPrefs, localPrefs }) {
                 </ButtonWithLoading>
               </P>
               <P isLast={true}>
-                <a // eslint-disable-line
+                {/* eslint-disable-next-line jsx-a11y/anchor-is-valid */}
+                <a
                   href="#"
                   style={{
                     color: colors.n4,
-                    fontStyle: 'italic'
+                    fontStyle: 'italic',
                   }}
                 >
                   How do these types of budgeting work?
@@ -250,7 +258,6 @@ function BudgetTitlebar({ globalPrefs, saveGlobalPrefs, localPrefs }) {
 }
 
 function Titlebar({
-  location,
   globalPrefs,
   saveGlobalPrefs,
   localPrefs,
@@ -259,12 +266,15 @@ function Titlebar({
   syncError,
   setAppState,
   style,
-  sync
+  sync,
 }) {
+  let history = useHistory();
+  let location = useLocation();
   let sidebar = useSidebar();
+  let { isNarrowWidth } = useResponsive();
   const serverURL = useServerURL();
 
-  return (
+  return isNarrowWidth ? null : (
     <View
       style={[
         {
@@ -274,98 +284,67 @@ function Titlebar({
           height: 36,
           pointerEvents: 'none',
           '& *': {
-            pointerEvents: 'auto'
-          }
+            pointerEvents: 'auto',
+          },
         },
         !Platform.isBrowser &&
           Platform.OS === 'mac' &&
           floatingSidebar && { paddingLeft: 80 },
-        style
+        style,
       ]}
     >
-      {floatingSidebar && (
+      {(floatingSidebar || sidebar.alwaysFloats) && (
         <Button
           bare
-          style={{
-            marginRight: 8,
-            '& .arrow-right': { opacity: 0, transition: 'opacity .3s' },
-            '& .menu': { opacity: 1, transition: 'opacity .3s' },
-            '&:hover .arrow-right': { opacity: 1 },
-            '&:hover .menu': { opacity: 0 }
+          style={{ marginRight: 8 }}
+          onPointerEnter={e => {
+            if (e.pointerType === 'mouse') {
+              sidebar.setHidden(false);
+            }
           }}
-          onMouseEnter={() => sidebar.show()}
-          onMouseLeave={() => sidebar.hide()}
-          onClick={() => {
-            saveGlobalPrefs({ floatingSidebar: !floatingSidebar });
+          onPointerLeave={e => {
+            if (e.pointerType === 'mouse') {
+              sidebar.setHidden(true);
+            }
+          }}
+          onPointerUp={e => {
+            if (e.pointerType !== 'mouse') {
+              sidebar.setHidden(!sidebar.hidden);
+            }
           }}
         >
-          <View style={{ width: 15, height: 15 }}>
-            <ArrowButtonRight1
-              className="arrow-right"
-              style={{
-                width: 13,
-                height: 13,
-                color: colors.n5,
-                position: 'absolute',
-                top: 1,
-                left: 1
-              }}
-            />
-            <NavigationMenu
-              className="menu"
-              style={{
-                width: 15,
-                height: 15,
-                color: colors.n5,
-                position: 'absolute',
-                top: 0,
-                left: 0
-              }}
-            />
-          </View>
+          <NavigationMenu
+            className="menu"
+            style={{ width: 15, height: 15, color: colors.n5, left: 0 }}
+          />
         </Button>
       )}
 
       <Switch>
-        <Route
-          path="/accounts"
-          exact
-          children={props => {
-            let state = props.location.state || {};
-            return state.goBack ? (
-              <Button onClick={() => props.history.goBack()} bare>
-                <ArrowLeft
-                  width={10}
-                  height={10}
-                  style={{ marginRight: 5, color: 'currentColor' }}
-                />{' '}
-                Back
-              </Button>
-            ) : null;
-          }}
-        />
+        <Route path="/accounts" exact>
+          {location.state?.goBack ? (
+            <Button onClick={() => history.goBack()} bare>
+              <ArrowLeft
+                width={10}
+                height={10}
+                style={{ marginRight: 5, color: 'currentColor' }}
+              />{' '}
+              Back
+            </Button>
+          ) : null}
+        </Route>
 
-        <Route
-          path="/accounts/:id"
-          exact
-          children={props => {
-            return (
-              props.match && <AccountSyncCheck id={props.match.params.id} />
-            );
-          }}
-        />
+        <Route path="/accounts/:id" exact>
+          <AccountSyncCheck />
+        </Route>
 
-        <Route
-          path="/budget"
-          exact
-          children={() => (
-            <BudgetTitlebar
-              globalPrefs={globalPrefs}
-              saveGlobalPrefs={saveGlobalPrefs}
-              localPrefs={localPrefs}
-            />
-          )}
-        />
+        <Route path="/budget" exact>
+          <BudgetTitlebar
+            globalPrefs={globalPrefs}
+            saveGlobalPrefs={saveGlobalPrefs}
+            localPrefs={localPrefs}
+          />
+        </Route>
       </Switch>
       <View style={{ flex: 1 }} />
       <UncategorizedButton />
@@ -381,14 +360,12 @@ function Titlebar({
   );
 }
 
-export default withRouter(
-  connect(
-    state => ({
-      globalPrefs: state.prefs.global,
-      localPrefs: state.prefs.local,
-      userData: state.user.data,
-      floatingSidebar: state.prefs.global.floatingSidebar
-    }),
-    actions
-  )(Titlebar)
-);
+export default connect(
+  state => ({
+    globalPrefs: state.prefs.global,
+    localPrefs: state.prefs.local,
+    userData: state.user.data,
+    floatingSidebar: state.prefs.global.floatingSidebar,
+  }),
+  actions,
+)(Titlebar);

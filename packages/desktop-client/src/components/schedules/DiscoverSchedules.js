@@ -4,27 +4,16 @@ import { useHistory } from 'react-router-dom';
 import q, { runQuery } from 'loot-core/src/client/query-helpers';
 import { send } from 'loot-core/src/platform/client/fetch';
 import { getRecurringDescription } from 'loot-core/src/shared/schedules';
-import {
-  View,
-  Stack,
-  ButtonWithLoading,
-  P
-} from 'loot-design/src/components/common';
-import {
-  Table,
-  TableHeader,
-  Row,
-  Field,
-  SelectCell
-} from 'loot-design/src/components/table';
+
 import useSelected, {
   useSelectedDispatch,
   useSelectedItems,
-  SelectedProvider
-} from 'loot-design/src/components/useSelected';
-import { colors } from 'loot-design/src/style';
-
+  SelectedProvider,
+} from '../../hooks/useSelected';
+import { colors } from '../../style';
+import { View, Stack, ButtonWithLoading, P } from '../common';
 import { Page, usePageType } from '../Page';
+import { Table, TableHeader, Row, Field, SelectCell } from '../table';
 import DisplayId from '../util/DisplayId';
 
 import { ScheduleAmountCell } from './SchedulesTable';
@@ -46,24 +35,24 @@ function DiscoverSchedulesTable({ schedules, loading }) {
         height={ROW_HEIGHT}
         inset={15}
         backgroundColor="transparent"
-        onClick={() => {
-          dispatchSelected({ type: 'select', id: item.id });
+        onClick={e => {
+          dispatchSelected({ type: 'select', id: item.id, event: e });
         }}
         borderColor={selected ? colors.b8 : colors.border}
         style={{
           cursor: 'pointer',
           backgroundColor: selected ? colors.selected : 'white',
           ':hover': {
-            backgroundColor: selected ? colors.selected : colors.hover
-          }
+            backgroundColor: selected ? colors.selected : colors.hover,
+          },
         }}
       >
         <SelectCell
           exposed={true}
           focused={false}
           selected={selected}
-          onSelect={() => {
-            dispatchSelected({ type: 'select', id: item.id });
+          onSelect={e => {
+            dispatchSelected({ type: 'select', id: item.id, event: e });
           }}
         />
         <Field width="flex">
@@ -87,7 +76,7 @@ function DiscoverSchedulesTable({ schedules, loading }) {
           exposed={true}
           focused={false}
           selected={selectedItems.size > 0}
-          onSelect={() => dispatchSelected({ type: 'select-all' })}
+          onSelect={e => dispatchSelected({ type: 'select-all', event: e })}
         />
         <Field width="flex">Payee</Field>
         <Field width="flex">Account</Field>
@@ -104,7 +93,8 @@ function DiscoverSchedulesTable({ schedules, loading }) {
         backgroundColor={pageType.type === 'modal' ? 'transparent' : undefined}
         style={{
           flex: 1,
-          backgroundColor: pageType.type === 'modal' ? 'transparent' : undefined
+          backgroundColor:
+            pageType.type === 'modal' ? 'transparent' : undefined,
         }}
         items={schedules}
         loading={loading}
@@ -137,23 +127,23 @@ export default function DiscoverSchedules() {
 
     for (let schedule of selected) {
       let scheduleId = await send('schedule/create', {
-        conditions: schedule._conditions
+        conditions: schedule._conditions,
       });
 
       // Now query for matching transactions and link them automatically
       let { filters } = await send('make-filters-from-conditions', {
-        conditions: schedule._conditions
+        conditions: schedule._conditions,
       });
 
       if (filters.length > 0) {
         let { data: transactions } = await runQuery(
-          q('transactions').filter({ $and: filters }).select('id')
+          q('transactions').filter({ $and: filters }).select('id'),
         );
         await send('transactions-batch-update', {
           updated: transactions.map(t => ({
             id: t.id,
-            schedule: scheduleId
-          }))
+            schedule: scheduleId,
+          })),
         });
       }
     }
@@ -169,12 +159,9 @@ export default function DiscoverSchedules() {
         the ones you want to create.
       </P>
       <P>
-        If you expected a schedule here and don't see it, it might be because
-        the payees of the transactions don't match. Make sure you rename payees
+        If you expected a schedule here and don’t see it, it might be because
+        the payees of the transactions don’t match. Make sure you rename payees
         on all transactions for a schedule to be the same payee.
-      </P>
-      <P>
-        You can always do this later from “More Tools” &rarr; “Find Schedules.”
       </P>
 
       <SelectedProvider instance={selectedInst}>
@@ -190,7 +177,7 @@ export default function DiscoverSchedules() {
         justify="flex-end"
         style={{
           paddingTop: 20,
-          paddingBottom: pageType.type === 'modal' ? 0 : 20
+          paddingBottom: pageType.type === 'modal' ? 0 : 20,
         }}
       >
         <ButtonWithLoading

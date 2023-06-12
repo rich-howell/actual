@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Component } from 'react';
 import { connect } from 'react-redux';
 
 import { css } from 'glamor';
@@ -6,11 +6,12 @@ import { css } from 'glamor';
 import * as actions from 'loot-core/src/client/actions';
 import {
   init as initConnection,
-  send
+  send,
 } from 'loot-core/src/platform/client/fetch';
-import { styles, hasHiddenScrollbars } from 'loot-design/src/style';
 
 import installPolyfills from '../polyfills';
+import { ResponsiveProvider } from '../ResponsiveProvider';
+import { styles, hasHiddenScrollbars } from '../style';
 
 import AppBackground from './AppBackground';
 import FatalError from './FatalError';
@@ -19,11 +20,11 @@ import ManagementApp from './manager/ManagementApp';
 import MobileWebMessage from './MobileWebMessage';
 import UpdateNotification from './UpdateNotification';
 
-class App extends React.Component {
+class App extends Component {
   state = {
     fatalError: null,
     initializing: true,
-    hiddenScrollbars: hasHiddenScrollbars()
+    hiddenScrollbars: hasHiddenScrollbars(),
   };
 
   async init() {
@@ -90,42 +91,44 @@ class App extends React.Component {
     const { fatalError, initializing, hiddenScrollbars } = this.state;
 
     return (
-      <div
-        key={hiddenScrollbars ? 'hidden-scrollbars' : 'scrollbars'}
-        {...css([
-          {
-            height: '100%',
-            backgroundColor: '#E8ECF0',
-            overflow: 'hidden'
-          },
-          styles.lightScrollbar
-        ])}
-      >
-        {fatalError ? (
-          <React.Fragment>
-            <AppBackground />
-            <FatalError error={fatalError} buttonText="Restart app" />
-          </React.Fragment>
-        ) : initializing ? (
-          <AppBackground
-            initializing={initializing}
-            loadingText={loadingText}
-          />
-        ) : budgetId ? (
-          <FinancesApp />
-        ) : (
-          <React.Fragment>
+      <ResponsiveProvider>
+        <div
+          key={hiddenScrollbars ? 'hidden-scrollbars' : 'scrollbars'}
+          {...css([
+            {
+              height: '100%',
+              backgroundColor: '#E8ECF0',
+              overflow: 'hidden',
+            },
+            styles.lightScrollbar,
+          ])}
+        >
+          {fatalError ? (
+            <>
+              <AppBackground />
+              <FatalError error={fatalError} buttonText="Restart app" />
+            </>
+          ) : initializing ? (
             <AppBackground
               initializing={initializing}
               loadingText={loadingText}
             />
-            <ManagementApp />
-          </React.Fragment>
-        )}
+          ) : budgetId ? (
+            <FinancesApp />
+          ) : (
+            <>
+              <AppBackground
+                initializing={initializing}
+                loadingText={loadingText}
+              />
+              <ManagementApp isLoading={loadingText != null} />
+            </>
+          )}
 
-        <UpdateNotification />
-        <MobileWebMessage />
-      </div>
+          <UpdateNotification />
+          <MobileWebMessage />
+        </div>
+      </ResponsiveProvider>
     );
   }
 }
@@ -134,7 +137,7 @@ export default connect(
   state => ({
     budgetId: state.prefs.local && state.prefs.local.id,
     cloudFileId: state.prefs.local && state.prefs.local.cloudFileId,
-    loadingText: state.app.loadingText
+    loadingText: state.app.loadingText,
   }),
-  actions
+  actions,
 )(App);

@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { savePrefs } from 'loot-core/src/client/actions';
-import { View, Text, Button } from 'loot-design/src/components/common';
-import { Checkbox } from 'loot-design/src/components/forms';
-import { colors, styles } from 'loot-design/src/style';
 
-import { isMobile } from '../util';
+import { useResponsive } from '../ResponsiveProvider';
+import { colors, styles } from '../style';
+
+import { View, Text, Button } from './common';
+import { Checkbox } from './forms';
 
 let buttonStyle = { border: 0, fontSize: 15, padding: '10px 13px' };
 
@@ -15,10 +16,12 @@ export default function MobileWebMessage() {
     return (state.prefs.local && state.prefs.local.hideMobileMessage) || true;
   });
 
+  const { isNarrowWidth } = useResponsive();
+
   let [show, setShow] = useState(
-    isMobile() &&
+    isNarrowWidth &&
       !hideMobileMessagePref &&
-      !document.cookie.match(/hideMobileMessage=true/)
+      !document.cookie.match(/hideMobileMessage=true/),
   );
   let [requestDontRemindMe, setRequestDontRemindMe] = useState(false);
 
@@ -57,7 +60,7 @@ export default function MobileWebMessage() {
         borderRadius: 6,
         zIndex: 10000,
         fontSize: 15,
-        ...styles.shadowLarge
+        ...styles.shadowLarge,
       }}
     >
       <Text style={{ lineHeight: '1.5em' }}>
@@ -73,7 +76,7 @@ export default function MobileWebMessage() {
         style={{
           gap: 16,
           marginTop: 20,
-          justifyContent: 'center'
+          justifyContent: 'center',
         }}
       >
         <Button style={buttonStyle} onClick={onTry}>
@@ -83,7 +86,7 @@ export default function MobileWebMessage() {
           style={{
             alignItems: 'center',
             flexDirection: 'row',
-            justifyContent: 'flex-end'
+            justifyContent: 'flex-end',
           }}
         >
           <Checkbox
@@ -96,10 +99,10 @@ export default function MobileWebMessage() {
           <label
             htmlFor="dont_remind_me"
             style={{
-              userSelect: 'none'
+              userSelect: 'none',
             }}
           >
-            Don't remind me again
+            Don’t remind me again
           </label>
         </View>
       </View>

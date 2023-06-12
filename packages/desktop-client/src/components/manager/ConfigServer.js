@@ -4,21 +4,15 @@ import { useHistory } from 'react-router-dom';
 
 import { createBudget } from 'loot-core/src/client/actions/budgets';
 import { signOut, loggedIn } from 'loot-core/src/client/actions/user';
-import { send } from 'loot-core/src/platform/client/fetch';
 import {
-  View,
-  Text,
-  Button,
-  ButtonWithLoading
-} from 'loot-design/src/components/common';
-import { useSetThemeColor } from 'loot-design/src/components/hooks';
-import { colors } from 'loot-design/src/style';
-import {
-  isDevelopmentEnvironment,
-  isPreviewEnvironment
-} from 'loot-design/src/util/environment';
+  isNonProductionEnvironment,
+  isElectron,
+} from 'loot-core/src/shared/environment';
 
-import { useServerURL } from '../../hooks/useServerURL';
+import { useSetThemeColor } from '../../hooks';
+import { colors } from '../../style';
+import { View, Text, Button, ButtonWithLoading } from '../common';
+import { useServerURL, useSetServerURL } from '../ServerContext';
 
 import { Title, Input } from './subscribe/common';
 
@@ -28,6 +22,7 @@ export default function ConfigServer() {
   let history = useHistory();
   let [url, setUrl] = useState('');
   let currentUrl = useServerURL();
+  let setServerUrl = useSetServerURL();
   useEffect(() => {
     setUrl(currentUrl);
   }, [currentUrl]);
@@ -50,14 +45,14 @@ export default function ConfigServer() {
 
     setError(null);
     setLoading(true);
-    let { error } = await send('set-server-url', { url });
+    let { error } = await setServerUrl(url);
 
     if (
       error === 'network-failure' &&
       !url.startsWith('http://') &&
       !url.startsWith('https://')
     ) {
-      let { error } = await send('set-server-url', { url: 'https://' + url });
+      let { error } = await setServerUrl('https://' + url);
       if (error) {
         setUrl('https://' + url);
         setError(error);
@@ -81,131 +76,131 @@ export default function ConfigServer() {
   }
 
   async function onSkip() {
-    await send('set-server-url', { url: null });
+    await setServerUrl(null);
     await dispatch(loggedIn());
     history.push('/');
   }
 
   async function onCreateTestFile() {
-    await send('set-server-url', { url: null });
+    await setServerUrl(null);
     await dispatch(createBudget({ testMode: true }));
     window.__history.push('/');
   }
 
   return (
-    <>
-      <View style={{ maxWidth: 500, marginTop: -30 }}>
-        <Title text="Where's the server?" />
+    <View style={{ maxWidth: 500, marginTop: -30 }}>
+      <Title text="Where’s the server?" />
 
+      <Text
+        style={{
+          fontSize: 16,
+          color: colors.n2,
+          lineHeight: 1.5,
+        }}
+      >
+        {currentUrl ? (
+          <>
+            Existing sessions will be logged out and you will log in to this
+            server. We will validate that Actual is running at this URL.
+          </>
+        ) : (
+          <>
+            There is no server configured. After running the server, specify the
+            URL here to use the app. You can always change this later. We will
+            validate that Actual is running at this URL.
+          </>
+        )}
+      </Text>
+
+      {error && (
         <Text
           style={{
-            fontSize: 16,
-            color: colors.n2,
-            lineHeight: 1.5
+            marginTop: 20,
+            color: colors.r4,
+            borderRadius: 4,
+            fontSize: 15,
           }}
         >
-          {currentUrl ? (
-            <>
-              Existing sessions will be logged out and you will log in to this
-              server. We will validate that Actual is running at this URL.
-            </>
-          ) : (
-            <>
-              There is no server configured. After running the server, specify
-              the URL here to use the app. You can always change this later. We
-              will validate that Actual is running at this URL.
-            </>
-          )}
+          {getErrorMessage(error)}
         </Text>
+      )}
 
-        {error && (
-          <Text
-            style={{
-              marginTop: 20,
-              color: colors.r4,
-              borderRadius: 4,
-              fontSize: 15
-            }}
+      <form
+        style={{ display: 'flex', flexDirection: 'row', marginTop: 30 }}
+        onSubmit={e => {
+          e.preventDefault();
+          onSubmit();
+        }}
+      >
+        <Input
+          autoFocus={true}
+          placeholder={'https://example.com'}
+          value={url}
+          onChange={e => setUrl(e.target.value)}
+          style={{ flex: 1, marginRight: 10 }}
+        />
+        <ButtonWithLoading primary loading={loading} style={{ fontSize: 15 }}>
+          OK
+        </ButtonWithLoading>
+        {currentUrl && (
+          <Button
+            bare
+            type="button"
+            style={{ fontSize: 15, marginLeft: 10 }}
+            onClick={() => history.goBack()}
           >
-            {getErrorMessage(error)}
-          </Text>
+            Cancel
+          </Button>
         )}
+      </form>
 
-        <form
-          style={{ display: 'flex', flexDirection: 'row', marginTop: 30 }}
-          onSubmit={e => {
-            e.preventDefault();
-            onSubmit();
-          }}
-        >
-          <Input
-            autoFocus={true}
-            placeholder={'https://example.com'}
-            value={url}
-            onChange={e => setUrl(e.target.value)}
-            style={{ flex: 1, marginRight: 10 }}
-          />
-          <ButtonWithLoading primary loading={loading} style={{ fontSize: 15 }}>
-            OK
-          </ButtonWithLoading>
-          {currentUrl && (
-            <Button
-              bare
-              type="button"
-              style={{ fontSize: 15, marginLeft: 10 }}
-              onClick={() => history.goBack()}
-            >
-              Cancel
-            </Button>
-          )}
-        </form>
-
-        <View
-          style={{
-            flexDirection: 'row',
-            flexFlow: 'row wrap',
-            justifyContent: 'center',
-            marginTop: 15
-          }}
-        >
-          {currentUrl ? (
-            <Button bare style={{ color: colors.n4 }} onClick={onSkip}>
-              Stop using a server
-            </Button>
-          ) : (
-            <>
+      <View
+        style={{
+          flexDirection: 'row',
+          flexFlow: 'row wrap',
+          justifyContent: 'center',
+          marginTop: 15,
+        }}
+      >
+        {currentUrl ? (
+          <Button bare style={{ color: colors.n4 }} onClick={onSkip}>
+            Stop using a server
+          </Button>
+        ) : (
+          <>
+            {!isElectron() && (
               <Button
                 bare
                 style={{
                   color: colors.n4,
                   margin: 5,
-                  marginRight: 15
+                  marginRight: 15,
                 }}
                 onClick={onSameDomain}
               >
                 Use {window.location.origin.replace(/https?:\/\//, '')}
               </Button>
-              <Button
-                bare
-                style={{ color: colors.n4, margin: 5 }}
-                onClick={onSkip}
-              >
-                Don't use a server
-              </Button>
+            )}
+            <Button
+              bare
+              style={{ color: colors.n4, margin: 5 }}
+              onClick={onSkip}
+            >
+              Don’t use a server
+            </Button>
 
-              {(isDevelopmentEnvironment() || isPreviewEnvironment()) && (
-                <Button
-                  primary
-                  style={{ marginLeft: 15 }}
-                  onClick={onCreateTestFile}
-                >
-                  Create test file
-                </Button>
-              )}
-            </>
-          )}
-        </View>
+            {isNonProductionEnvironment() && (
+              <Button
+                primary
+                style={{ marginLeft: 15 }}
+                onClick={onCreateTestFile}
+              >
+                Create test file
+              </Button>
+            )}
+          </>
+        )}
       </View>
-    </>
+    </View>
   );
 }

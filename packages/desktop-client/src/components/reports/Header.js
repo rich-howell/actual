@@ -1,14 +1,10 @@
 import React from 'react';
 
 import * as monthUtils from 'loot-core/src/shared/months';
-import {
-  View,
-  Select,
-  Button,
-  ButtonLink
-} from 'loot-design/src/components/common';
-import { styles } from 'loot-design/src/style';
-import ArrowLeft from 'loot-design/src/svg/v1/ArrowLeft';
+
+import ArrowLeft from '../../icons/v1/ArrowLeft';
+import { styles } from '../../style';
+import { View, Select, Button, ButtonLink } from '../common';
 
 function validateStart(allMonths, start, end) {
   const earliest = allMonths[allMonths.length - 1].name;
@@ -49,13 +45,21 @@ function getFullRange(allMonths) {
   return [start, end];
 }
 
-function Header({ title, start, end, show1Month, allMonths, onChangeDates }) {
+function Header({
+  title,
+  start,
+  end,
+  show1Month,
+  allMonths,
+  onChangeDates,
+  extraButtons,
+}) {
   return (
     <View
       style={{
         padding: 20,
         paddingTop: 0,
-        flexShrink: 0
+        flexShrink: 0,
       }}
     >
       <ButtonLink
@@ -71,7 +75,8 @@ function Header({ title, start, end, show1Month, allMonths, onChangeDates }) {
         style={{
           flexDirection: 'row',
           alignItems: 'center',
-          marginTop: 15
+          marginTop: 15,
+          gap: 15,
         }}
       >
         <div>
@@ -103,41 +108,24 @@ function Header({ title, start, end, show1Month, allMonths, onChangeDates }) {
             ))}
           </Select>
         </div>
+
+        {extraButtons}
+
         {show1Month && (
-          <Button
-            bare
-            style={{ marginLeft: 15 }}
-            onClick={() => onChangeDates(...getLatestRange(1))}
-          >
+          <Button bare onClick={() => onChangeDates(...getLatestRange(1))}>
             1 month
           </Button>
         )}
-        <Button
-          bare
-          style={{ marginLeft: 15 }}
-          onClick={() => onChangeDates(...getLatestRange(2))}
-        >
+        <Button bare onClick={() => onChangeDates(...getLatestRange(2))}>
           3 months
         </Button>
-        <Button
-          bare
-          style={{ marginLeft: 15 }}
-          onClick={() => onChangeDates(...getLatestRange(5))}
-        >
+        <Button bare onClick={() => onChangeDates(...getLatestRange(5))}>
           6 months
         </Button>
-        <Button
-          bare
-          style={{ marginLeft: 15 }}
-          onClick={() => onChangeDates(...getLatestRange(12))}
-        >
+        <Button bare onClick={() => onChangeDates(...getLatestRange(11))}>
           1 Year
         </Button>
-        <Button
-          bare
-          style={{ marginLeft: 15 }}
-          onClick={() => onChangeDates(...getFullRange(allMonths))}
-        >
+        <Button bare onClick={() => onChangeDates(...getFullRange(allMonths))}>
           All Time
         </Button>
       </View>

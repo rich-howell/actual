@@ -2,14 +2,15 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 
 import { getMonthYearFormat } from 'loot-core/src/shared/months';
-import AccountAutocomplete from 'loot-design/src/components/AccountAutocomplete';
-import Autocomplete from 'loot-design/src/components/Autocomplete';
-import CategoryAutocomplete from 'loot-design/src/components/CategorySelect';
-import { View, Input } from 'loot-design/src/components/common';
-import DateSelect from 'loot-design/src/components/DateSelect';
-import { Checkbox } from 'loot-design/src/components/forms';
-import PayeeAutocomplete from 'loot-design/src/components/PayeeAutocomplete';
-import RecurringSchedulePicker from 'loot-design/src/components/RecurringSchedulePicker';
+
+import AccountAutocomplete from '../autocomplete/AccountAutocomplete';
+import Autocomplete from '../autocomplete/Autocomplete';
+import CategoryAutocomplete from '../autocomplete/CategorySelect';
+import PayeeAutocomplete from '../autocomplete/PayeeAutocomplete';
+import { View, Input } from '../common';
+import { Checkbox } from '../forms';
+import DateSelect from '../select/DateSelect';
+import RecurringSchedulePicker from '../select/RecurringSchedulePicker';
 
 export default function GenericInput({
   field,
@@ -19,14 +20,14 @@ export default function GenericInput({
   value,
   inputRef,
   style,
-  onChange
+  onChange,
 }) {
   let { payees, accounts, categoryGroups, dateFormat } = useSelector(state => {
     return {
       payees: state.queries.payees,
       accounts: state.queries.accounts,
       categoryGroups: state.queries.categories.grouped,
-      dateFormat: state.prefs.local.dateFormat || 'MM/dd/yyyy'
+      dateFormat: state.prefs.local.dateFormat || 'MM/dd/yyyy',
     };
   });
 
@@ -44,23 +45,21 @@ export default function GenericInput({
     case 'id':
       switch (field) {
         case 'payee':
-          if (payees.length > 0) {
-            content = (
-              <PayeeAutocomplete
-                payees={payees}
-                accounts={accounts}
-                multi={multi}
-                showMakeTransfer={false}
-                openOnFocus={true}
-                value={value}
-                onSelect={onChange}
-                inputProps={{
-                  inputRef,
-                  ...(showPlaceholder ? { placeholder: 'nothing' } : null)
-                }}
-              />
-            );
-          }
+          content = (
+            <PayeeAutocomplete
+              payees={payees}
+              accounts={accounts}
+              multi={multi}
+              showMakeTransfer={false}
+              openOnFocus={true}
+              value={value}
+              onSelect={onChange}
+              inputProps={{
+                inputRef,
+                ...(showPlaceholder ? { placeholder: 'nothing' } : null),
+              }}
+            />
+          );
           break;
 
         case 'account':
@@ -73,7 +72,7 @@ export default function GenericInput({
               onSelect={onChange}
               inputProps={{
                 inputRef,
-                ...(showPlaceholder ? { placeholder: 'nothing' } : null)
+                ...(showPlaceholder ? { placeholder: 'nothing' } : null),
               }}
             />
           );
@@ -89,7 +88,7 @@ export default function GenericInput({
               onSelect={onChange}
               inputProps={{
                 inputRef,
-                ...(showPlaceholder ? { placeholder: 'nothing' } : null)
+                ...(showPlaceholder ? { placeholder: 'nothing' } : null),
               }}
             />
           );
@@ -155,7 +154,7 @@ export default function GenericInput({
         <Checkbox
           checked={value}
           value={value}
-          onChange={e => onChange(!value)}
+          onChange={() => onChange(!value)}
         />
       );
       break;

@@ -1,9 +1,11 @@
 import React, {
+  forwardRef,
+  memo,
   useState,
   useEffect,
   useRef,
   useCallback,
-  useMemo
+  useMemo,
 } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -21,14 +23,16 @@ import { getMonthYearFormat } from 'loot-core/src/shared/months';
 import { mapField, friendlyOp } from 'loot-core/src/shared/rules';
 import { getRecurringDescription } from 'loot-core/src/shared/schedules';
 import { integerToCurrency } from 'loot-core/src/shared/util';
-import {
-  View,
-  Text,
-  Button,
-  Stack,
-  ExternalLink,
-  Input
-} from 'loot-design/src/components/common';
+
+import useSelected, {
+  useSelectedDispatch,
+  useSelectedItems,
+  SelectedProvider,
+} from '../hooks/useSelected';
+import ArrowRight from '../icons/v0/RightArrow2';
+import { colors } from '../style';
+
+import { View, Text, Button, Stack, ExternalLink, Input } from './common';
 import {
   SelectCell,
   Row,
@@ -36,24 +40,18 @@ import {
   Cell,
   CellButton,
   TableHeader,
-  useTableNavigator
-} from 'loot-design/src/components/table';
-import useSelected, {
-  useSelectedDispatch,
-  useSelectedItems,
-  SelectedProvider
-} from 'loot-design/src/components/useSelected';
-import { colors } from 'loot-design/src/style';
-import ArrowRight from 'loot-design/src/svg/v0/RightArrow2';
+  useTableNavigator,
+} from './table';
 
 let SchedulesQuery = liveQueryContext(q('schedules').select('*'));
 
 export function Value({
   value,
   field,
+  valueIsRaw,
   inline = false,
   data: dataProp,
-  describe = x => x.name
+  describe = x => x.name,
 }) {
   let { data, dateFormat } = useSelector(state => {
     let data;
@@ -77,7 +75,7 @@ export function Value({
 
     return {
       data,
-      dateFormat: state.prefs.local.dateFormat || 'MM/dd/yyyy'
+      dateFormat: state.prefs.local.dateFormat || 'MM/dd/yyyy',
     };
   });
   let [expanded, setExpanded] = useState(false);
@@ -93,33 +91,45 @@ export function Value({
     } else if (typeof value === 'boolean') {
       return value ? 'true' : 'false';
     } else {
-      if (field === 'amount') {
-        return integerToCurrency(value);
-      } else if (field === 'date') {
-        if (value) {
-          if (value.frequency) {
-            return getRecurringDescription(value);
+      switch (field) {
+        case 'amount':
+          return integerToCurrency(value);
+        case 'date':
+          if (value) {
+            if (value.frequency) {
+              return getRecurringDescription(value);
+            }
+            return formatDate(parseISO(value), dateFormat);
           }
-          return formatDate(parseISO(value), dateFormat);
-        }
-        return null;
-      } else if (field === 'month') {
-        return value
-          ? formatDate(parseISO(value), getMonthYearFormat(dateFormat))
-          : null;
-      } else if (field === 'year') {
-        return value ? formatDate(parseISO(value), 'yyyy') : null;
-      } else {
-        if (data && data.length) {
-          let item = data.find(item => item.id === value);
-          if (item) {
-            return describe(item);
-          } else {
-            return '(deleted)';
+          return null;
+        case 'month':
+          return value
+            ? formatDate(parseISO(value), getMonthYearFormat(dateFormat))
+            : null;
+        case 'year':
+          return value ? formatDate(parseISO(value), 'yyyy') : null;
+        case 'notes':
+        case 'imported_payee':
+          return value;
+        case 'payee':
+        case 'category':
+        case 'account':
+        case 'rule':
+          if (valueIsRaw) {
+            return value;
           }
-        } else {
+          if (data && data.length) {
+            let item = data.find(item => item.id === value);
+            if (item) {
+              return describe(item);
+            } else {
+              return '(deleted)';
+            }
+          }
+
           return '…';
-        }
+        default:
+          throw new Error(`Unknown field ${field}`);
       }
     }
   }
@@ -169,14 +179,14 @@ export function Value({
         {numHidden > 0 && (
           <Text style={{ color: colors.p4 }}>
             &nbsp;&nbsp;
-            {/* eslint-disable-next-line */}
+            {/* eslint-disable-next-line jsx-a11y/anchor-is-valid */}
             <a
               href="#"
               onClick={onExpand}
               {...css({
                 color: colors.p4,
                 textDecoration: 'none',
-                ':hover': { textDecoration: 'underline' }
+                ':hover': { textDecoration: 'underline' },
               })}
             >
               {numHidden} more items...
@@ -205,8 +215,8 @@ export function ConditionExpression({
   op,
   value,
   options,
-  stage,
-  style
+  prefix,
+  style,
 }) {
   return (
     <View
@@ -219,11 +229,12 @@ export function ConditionExpression({
           padding: '3px 5px',
           whiteSpace: 'nowrap',
           overflow: 'hidden',
-          textOverflow: 'ellipsis'
+          textOverflow: 'ellipsis',
         },
-        style
+        style,
       ]}
     >
+      {prefix && <Text style={{ color: colors.n3 }}>{prefix} </Text>}
       <Text style={{ color: colors.p4 }}>{mapField(field, options)}</Text>{' '}
       <Text style={{ color: colors.n3 }}>{friendlyOp(op)}</Text>{' '}
       <Value value={value} field={field} />
@@ -266,9 +277,9 @@ export function ActionExpression({ field, op, value, options, style }) {
           padding: '3px 5px',
           whiteSpace: 'nowrap',
           overflow: 'hidden',
-          textOverflow: 'ellipsis'
+          textOverflow: 'ellipsis',
         },
-        style
+        style,
       ]}
     >
       {op === 'set' ? (
@@ -288,7 +299,7 @@ export function ActionExpression({ field, op, value, options, style }) {
   );
 }
 
-let Rule = React.memo(
+let Rule = memo(
   ({
     rule,
     hovered,
@@ -297,7 +308,7 @@ let Rule = React.memo(
     focusedField,
     onHover,
     onEdit,
-    onEditRule
+    onEditRule,
   }) => {
     let dispatchSelected = useSelectedDispatch();
     let borderColor = selected ? colors.b8 : colors.border;
@@ -318,8 +329,8 @@ let Rule = React.memo(
         <SelectCell
           exposed={hovered || selected || editing}
           focused={focusedField === 'select'}
-          onSelect={() => {
-            dispatchSelected({ type: 'select', id: rule.id });
+          onSelect={e => {
+            dispatchSelected({ type: 'select', id: rule.id, event: e });
           }}
           onEdit={() => onEdit(rule.id, 'select')}
           selected={selected}
@@ -334,7 +345,7 @@ let Rule = React.memo(
                 backgroundColor: colors.b10,
                 color: colors.b1,
                 borderRadius: 4,
-                padding: '3px 5px'
+                padding: '3px 5px',
               }}
             >
               {rule.stage}
@@ -344,7 +355,10 @@ let Rule = React.memo(
 
         <Field width="flex" style={{ padding: '15px 0' }} truncate={false}>
           <Stack direction="row" align="center">
-            <View style={{ flex: 1, alignItems: 'flex-start' }}>
+            <View
+              style={{ flex: 1, alignItems: 'flex-start' }}
+              data-testid="conditions"
+            >
               {rule.conditions.map((cond, i) => (
                 <ConditionExpression
                   key={i}
@@ -352,7 +366,7 @@ let Rule = React.memo(
                   op={cond.op}
                   value={cond.value}
                   options={cond.options}
-                  stage={rule.stage}
+                  prefix={i > 0 ? friendlyOp(rule.conditionsOp) : null}
                   style={i !== 0 && { marginTop: 3 }}
                 />
               ))}
@@ -362,7 +376,10 @@ let Rule = React.memo(
               <ArrowRight color={colors.n4} style={{ width: 12, height: 12 }} />
             </Text>
 
-            <View style={{ flex: 1, alignItems: 'flex-start' }}>
+            <View
+              style={{ flex: 1, alignItems: 'flex-start' }}
+              data-testid="actions"
+            >
               {rule.actions.map((action, i) => (
                 <ActionExpression
                   key={i}
@@ -393,13 +410,13 @@ let Rule = React.memo(
         </Cell>
       </Row>
     );
-  }
+  },
 );
 
-let SimpleTable = React.forwardRef(
+let SimpleTable = forwardRef(
   (
     { data, navigator, loadMore, style, onHoverLeave, children, ...props },
-    ref
+    ref,
   ) => {
     let contentRef = useRef();
     let contentHeight = useRef();
@@ -429,11 +446,12 @@ let SimpleTable = React.forwardRef(
           {
             flex: 1,
             outline: 'none',
-            '& .animated .animated-row': { transition: '.25s transform' }
+            '& .animated .animated-row': { transition: '.25s transform' },
           },
-          style
+          style,
         ]}
         tabIndex="1"
+        data-testid="table"
         {...getNavigatorProps(props)}
       >
         <View
@@ -447,7 +465,7 @@ let SimpleTable = React.forwardRef(
         </View>
       </View>
     );
-  }
+  },
 );
 
 function RulesHeader() {
@@ -460,7 +478,7 @@ function RulesHeader() {
         exposed={true}
         focused={false}
         selected={selectedItems.size > 0}
-        onSelect={() => dispatchSelected({ type: 'select-all' })}
+        onSelect={e => dispatchSelected({ type: 'select-all', event: e })}
       />
       <Cell value="Stage" width={50} />
       <Cell value="Rule" width="flex" />
@@ -476,7 +494,7 @@ function RulesList({
   collapsed: borderCollapsed,
   onHover,
   onCollapse,
-  onEditRule
+  onEditRule,
 }) {
   if (rules.length === 0) {
     return null;
@@ -532,7 +550,7 @@ function ruleToString(rule, data) {
     friendlyOp(cond.op),
     cond.op === 'oneOf'
       ? cond.value.map(v => mapValue(cond.field, v, data)).join(', ')
-      : mapValue(cond.field, cond.value, data)
+      : mapValue(cond.field, cond.value, data),
   ]);
   let actions = rule.actions.flatMap(action => {
     if (action.op === 'set') {
@@ -540,7 +558,7 @@ function ruleToString(rule, data) {
         friendlyOp(action.op),
         mapField(action.field),
         'to',
-        mapValue(action.field, action.value, data)
+        mapValue(action.field, action.value, data),
       ];
     } else if (action.op === 'link-schedule') {
       let schedule = data.schedules.find(s => s.id === action.value);
@@ -548,8 +566,8 @@ function ruleToString(rule, data) {
         friendlyOp(action.op),
         describeSchedule(
           schedule,
-          data.payees.find(p => p.id === schedule._payee)
-        )
+          data.payees.find(p => p.id === schedule._payee),
+        ),
       ];
     } else {
       return [];
@@ -572,7 +590,7 @@ function ManageRulesContent({ isModal, payeeId, setLoading }) {
     payees: state.queries.payees,
     categories: state.queries.categories.list,
     accounts: state.queries.accounts,
-    schedules
+    schedules,
   }));
 
   let filteredRules = useMemo(
@@ -582,9 +600,9 @@ function ManageRulesContent({ isModal, payeeId, setLoading }) {
         : rules.filter(rule =>
             ruleToString(rule, filterData)
               .toLowerCase()
-              .includes(filter.toLowerCase())
+              .includes(filter.toLowerCase()),
           ),
-    [rules, filter, filterData]
+    [rules, filter, filterData],
   );
   let selectedInst = useSelected('manage-rules', allRules, []);
   let [hoveredRule, setHoveredRule] = useState(null);
@@ -596,7 +614,7 @@ function ManageRulesContent({ isModal, payeeId, setLoading }) {
     let loadedRules = null;
     if (payeeId) {
       loadedRules = await send('payees-get-rules', {
-        id: payeeId
+        id: payeeId,
       });
     } else {
       loadedRules = await send('rules-get');
@@ -631,7 +649,7 @@ function ManageRulesContent({ isModal, payeeId, setLoading }) {
   async function onDeleteSelected() {
     setLoading(true);
     let { someDeletionsFailed } = await send('rule-delete-all', [
-      ...selectedInst.items
+      ...selectedInst.items,
     ]);
 
     if (someDeletionsFailed) {
@@ -664,30 +682,31 @@ function ManageRulesContent({ isModal, payeeId, setLoading }) {
           });
 
           setLoading(false);
-        }
-      })
+        },
+      }),
     );
   }, []);
 
   function onCreateRule() {
     let rule = {
       stage: null,
+      conditionsOp: 'and',
       conditions: [
         {
           field: 'payee',
           op: 'is',
           value: payeeId || null,
-          type: 'id'
-        }
+          type: 'id',
+        },
       ],
       actions: [
         {
           op: 'set',
           field: 'category',
           value: null,
-          type: 'id'
-        }
-      ]
+          type: 'id',
+        },
+      ],
     };
 
     dispatch(
@@ -704,8 +723,8 @@ function ManageRulesContent({ isModal, payeeId, setLoading }) {
           });
 
           setLoading(false);
-        }
-      })
+        },
+      }),
     );
   }
 
@@ -725,7 +744,7 @@ function ManageRulesContent({ isModal, payeeId, setLoading }) {
             flexDirection: 'row',
             alignItems: 'center',
             padding: isModal ? '0 13px 15px' : '0 0 15px',
-            flexShrink: 0
+            flexShrink: 0,
           }}
         >
           <View
@@ -733,7 +752,7 @@ function ManageRulesContent({ isModal, payeeId, setLoading }) {
               color: colors.n4,
               flexDirection: 'row',
               alignItems: 'center',
-              width: '50%'
+              width: '50%',
             }}
           >
             <Text>
@@ -763,8 +782,8 @@ function ManageRulesContent({ isModal, payeeId, setLoading }) {
                 ? null
                 : {
                     backgroundColor: 'white',
-                    '::placeholder': { color: colors.n8 }
-                  }
+                    '::placeholder': { color: colors.n8 },
+                  },
             }}
           />
         </View>
@@ -793,7 +812,7 @@ function ManageRulesContent({ isModal, payeeId, setLoading }) {
             paddingBlock: 15,
             paddingInline: isModal ? 13 : 0,
             borderTop: isModal && '1px solid ' + colors.border,
-            flexShrink: 0
+            flexShrink: 0,
           }}
         >
           <Stack direction="row" align="center" justify="flex-end" spacing={2}>
@@ -815,7 +834,7 @@ function ManageRulesContent({ isModal, payeeId, setLoading }) {
 export default function ManageRules({
   isModal,
   payeeId,
-  setLoading = () => {}
+  setLoading = () => {},
 }) {
   return (
     <SchedulesQuery.Provider>

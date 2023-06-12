@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Component, PureComponent } from 'react';
 // import {
 //   RectButton,
 //   PanGestureHandler,
@@ -14,32 +14,25 @@ import * as actions from 'loot-core/src/client/actions';
 import { rolloverBudget, reportBudget } from 'loot-core/src/client/queries';
 import * as monthUtils from 'loot-core/src/shared/months';
 import { amountToInteger, integerToAmount } from 'loot-core/src/shared/util';
-import {
-  Button,
-  Card,
-  Label,
-  Text,
-  View
-} from 'loot-design/src/components/common';
-import CellValue from 'loot-design/src/components/spreadsheet/CellValue';
-import format from 'loot-design/src/components/spreadsheet/format';
-import NamespaceContext from 'loot-design/src/components/spreadsheet/NamespaceContext';
-import SheetValue from 'loot-design/src/components/spreadsheet/SheetValue';
-import useSheetValue from 'loot-design/src/components/spreadsheet/useSheetValue';
-import { colors, styles } from 'loot-design/src/style';
-import Add from 'loot-design/src/svg/v1/Add';
-import ArrowThinLeft from 'loot-design/src/svg/v1/ArrowThinLeft';
-import ArrowThinRight from 'loot-design/src/svg/v1/ArrowThinRight';
+
+import Add from '../../icons/v1/Add';
+import ArrowThinLeft from '../../icons/v1/ArrowThinLeft';
+import ArrowThinRight from '../../icons/v1/ArrowThinRight';
+import { colors, styles } from '../../style';
+import { Button, Card, Label, Text, View } from '../common';
+import CellValue from '../spreadsheet/CellValue';
+import format from '../spreadsheet/format';
+import NamespaceContext from '../spreadsheet/NamespaceContext';
+import SheetValue from '../spreadsheet/SheetValue';
+import useSheetValue from '../spreadsheet/useSheetValue';
+import { SyncButton } from '../Titlebar';
+import { AmountInput } from '../util/AmountInput';
 // import {
 //   AmountAccessoryContext,
 //   MathOperations
-// } from 'loot-design/src/components/mobile/AmountInput';
+// } from '../mobile/AmountInput';
 
 // import { DragDrop, Draggable, Droppable, DragDropHighlight } from './dragdrop';
-
-import { SyncButton } from '../Titlebar';
-import { AmountInput } from '../util/AmountInput';
-
 import { ListItem, ROW_HEIGHT } from './MobileTable';
 
 export function ToBudget({ toBudget, onClick }) {
@@ -61,8 +54,8 @@ export function ToBudget({ toBudget, onClick }) {
                 styles.smallText,
                 {
                   fontWeight: '500',
-                  color: amount < 0 ? colors.r4 : colors.n1
-                }
+                  color: amount < 0 ? colors.r4 : colors.n1,
+                },
               ]}
             >
               {format(amount, 'financial')}
@@ -96,8 +89,8 @@ function Saved({ projected }) {
           styles.smallText,
           {
             fontWeight: '500',
-            color: projected ? colors.y3 : isNegative ? colors.r4 : colors.n1
-          }
+            color: projected ? colors.y3 : isNegative ? colors.r4 : colors.n1,
+          },
         ]}
       >
         {format(saved, 'financial')}
@@ -106,7 +99,7 @@ function Saved({ projected }) {
   );
 }
 
-export class BudgetCell extends React.PureComponent {
+export class BudgetCell extends PureComponent {
   render() {
     const {
       name,
@@ -116,7 +109,7 @@ export class BudgetCell extends React.PureComponent {
       textStyle,
       categoryId,
       month,
-      onBudgetAction
+      onBudgetAction,
     } = this.props;
 
     return (
@@ -132,8 +125,8 @@ export class BudgetCell extends React.PureComponent {
                   ...(!editing && {
                     opacity: 0,
                     position: 'absolute',
-                    top: 0
-                  })
+                    top: 0,
+                  }),
                 }}
                 focused={editing}
                 textStyle={[styles.smallText, textStyle]}
@@ -141,7 +134,7 @@ export class BudgetCell extends React.PureComponent {
                 onBlur={value => {
                   onBudgetAction(month, 'budget-amount', {
                     category: categoryId,
-                    amount: amountToInteger(value)
+                    amount: amountToInteger(value),
                   });
                 }}
               />
@@ -150,7 +143,7 @@ export class BudgetCell extends React.PureComponent {
                 style={{
                   justifyContent: 'center',
                   height: ROW_HEIGHT - 4,
-                  ...(editing && { display: 'none' })
+                  ...(editing && { display: 'none' }),
                 }}
               >
                 <Text style={[styles.smallText, textStyle]} data-testid={name}>
@@ -165,7 +158,7 @@ export class BudgetCell extends React.PureComponent {
   }
 }
 
-// eslint-disable-next-line no-unused-vars
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function BudgetGroupPreview({ group, pending, style }) {
   //   let opacity = useMemo(() => new Animated.Value(0), []);
 
@@ -198,7 +191,7 @@ function BudgetGroupPreview({ group, pending, style }) {
       style={{
         marginTop: 7,
         marginBottom: 7,
-        opacity: pending ? 1 : 0.4
+        opacity: pending ? 1 : 0.4,
       }}
     >
       <TotalsRow group={group} blank={true} />
@@ -211,7 +204,7 @@ function BudgetGroupPreview({ group, pending, style }) {
   );
 }
 
-// eslint-disable-next-line no-unused-vars
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function BudgetCategoryPreview({ name, pending, style }) {
   return (
     // <Animated.View
@@ -235,7 +228,7 @@ function BudgetCategoryPreview({ name, pending, style }) {
       style={{
         flex: 1,
         borderColor: 'transparent',
-        borderRadius: 4
+        borderRadius: 4,
       }}
     >
       <Text style={styles.smallText}>{name}</Text>
@@ -244,7 +237,7 @@ function BudgetCategoryPreview({ name, pending, style }) {
   );
 }
 
-export class BudgetCategory extends React.PureComponent {
+export class BudgetCategory extends PureComponent {
   constructor(props) {
     super(props);
 
@@ -279,7 +272,7 @@ export class BudgetCategory extends React.PureComponent {
       style,
       month,
       // onEdit,
-      onBudgetAction
+      onBudgetAction,
     } = this.props;
 
     let budgeted = rolloverBudget.catBudgeted(category.id);
@@ -292,9 +285,9 @@ export class BudgetCategory extends React.PureComponent {
           {
             backgroundColor: editing ? colors.p11 : 'transparent',
             borderBottomWidth: 0,
-            borderTopWidth: index > 0 ? 1 : 0
+            borderTopWidth: index > 0 ? 1 : 0,
           },
-          style
+          style,
         ]}
         data-testid="row"
       >
@@ -312,7 +305,7 @@ export class BudgetCategory extends React.PureComponent {
           style={{
             alignItems: 'center',
             flexDirection: 'row',
-            opacity: this.opacity
+            opacity: this.opacity,
           }}
         >
           <BudgetCell
@@ -371,7 +364,7 @@ export class BudgetCategory extends React.PureComponent {
   }
 }
 
-export class TotalsRow extends React.PureComponent {
+export class TotalsRow extends PureComponent {
   constructor(props) {
     super(props);
 
@@ -398,7 +391,7 @@ export class TotalsRow extends React.PureComponent {
         style={{
           flexDirection: 'row',
           alignItems: 'center',
-          backgroundColor: colors.n11
+          backgroundColor: colors.n11,
         }}
         data-testid="totals"
       >
@@ -421,14 +414,14 @@ export class TotalsRow extends React.PureComponent {
           style={{
             flexDirection: 'row',
             alignItems: 'center',
-            opacity: this.opacity
+            opacity: this.opacity,
           }}
         >
           <CellValue
             binding={rolloverBudget.groupBudgeted(group.id)}
             style={[
               styles.smallText,
-              { width: 90, fontWeight: '500', textAlign: 'right' }
+              { width: 90, fontWeight: '500', textAlign: 'right' },
             ]}
             type="financial"
           />
@@ -436,7 +429,7 @@ export class TotalsRow extends React.PureComponent {
             binding={rolloverBudget.groupBalance(group.id)}
             style={[
               styles.smallText,
-              { width: 90, fontWeight: '500', textAlign: 'right' }
+              { width: 90, fontWeight: '500', textAlign: 'right' },
             ]}
             type="financial"
           />
@@ -490,7 +483,7 @@ export class TotalsRow extends React.PureComponent {
   }
 }
 
-export class IncomeCategory extends React.PureComponent {
+export class IncomeCategory extends PureComponent {
   render() {
     const { name, budget, balance, style, nameTextStyle, amountTextStyle } =
       this.props;
@@ -501,9 +494,9 @@ export class IncomeCategory extends React.PureComponent {
             flexDirection: 'row',
             alignItems: 'center',
             padding: 10,
-            backgroundColor: 'transparent'
+            backgroundColor: 'transparent',
           },
-          style
+          style,
         ]}
       >
         <View style={{ flex: 1 }}>
@@ -517,7 +510,7 @@ export class IncomeCategory extends React.PureComponent {
             style={[
               styles.smallText,
               { width: 90, textAlign: 'right' },
-              amountTextStyle
+              amountTextStyle,
             ]}
             type="financial"
           />
@@ -527,7 +520,7 @@ export class IncomeCategory extends React.PureComponent {
           style={[
             styles.smallText,
             { width: 90, textAlign: 'right' },
-            amountTextStyle
+            amountTextStyle,
           ]}
           type="financial"
         />
@@ -575,7 +568,7 @@ export class IncomeCategory extends React.PureComponent {
 //   );
 // }
 
-export class BudgetGroup extends React.PureComponent {
+export class BudgetGroup extends PureComponent {
   render() {
     const {
       group,
@@ -587,7 +580,7 @@ export class BudgetGroup extends React.PureComponent {
       onReorderCategory,
       // onReorderGroup,
       onAddCategory,
-      onBudgetAction
+      onBudgetAction,
     } = this.props;
 
     function editable(content) {
@@ -623,7 +616,7 @@ export class BudgetGroup extends React.PureComponent {
       <Card
         style={{
           marginTop: 7,
-          marginBottom: 7
+          marginBottom: 7,
         }}
       >
         <TotalsRow
@@ -652,12 +645,12 @@ export class BudgetGroup extends React.PureComponent {
             />
           );
         })}
-      </Card>
+      </Card>,
     );
   }
 }
 
-export class IncomeBudgetGroup extends React.Component {
+export class IncomeBudgetGroup extends Component {
   render() {
     const { type, group } = this.props;
     return (
@@ -669,7 +662,7 @@ export class IncomeBudgetGroup extends React.Component {
             justifyContent: 'flex-end',
             marginTop: 50,
             marginBottom: 5,
-            marginRight: 14
+            marginRight: 14,
           }}
         >
           {type === 'report' && (
@@ -720,11 +713,11 @@ export class IncomeBudgetGroup extends React.Component {
   }
 }
 
-export class BudgetGroups extends React.Component {
+export class BudgetGroups extends Component {
   getGroups = memoizeOne(groups => {
     return {
       incomeGroup: groups.find(group => group.is_income),
-      expenseGroups: groups.filter(group => !group.is_income)
+      expenseGroups: groups.filter(group => !group.is_income),
     };
   });
 
@@ -740,7 +733,7 @@ export class BudgetGroups extends React.Component {
       onAddCategory,
       onReorderCategory,
       onReorderGroup,
-      onBudgetAction
+      onBudgetAction,
     } = this.props;
     const { incomeGroup, expenseGroups } = this.getGroups(categoryGroups);
 
@@ -773,7 +766,7 @@ export class BudgetGroups extends React.Component {
   }
 }
 
-export class BudgetTable extends React.Component {
+export class BudgetTable extends Component {
   // static contextType = AmountAccessoryContext;
   state = { editingCategory: null };
 
@@ -845,14 +838,6 @@ export class BudgetTable extends React.Component {
   //   onKeyboardDone = () => {
   //     Keyboard.dismiss();
 
-  //     if (Platform.isReactNativeWeb) {
-  //       // TODO: If we are running tests, they can't rely on the
-  //       // keyboard events, so manually reset the state here. Hopefully
-  //       // we can find a better solution for this in the future.
-  //       this.onEditCategory(null);
-  //     }
-  //   };
-
   // onMoveUp = () => {
   //   const { categories } = this.props;
   //   const { editingCategory } = this.state;
@@ -890,7 +875,7 @@ export class BudgetTable extends React.Component {
       onReorderGroup,
       onShowBudgetDetails,
       onOpenActionSheet,
-      onBudgetAction
+      onBudgetAction,
     } = this.props;
     // let editMode = false; // neuter editMode -- sorry, not rewriting drag-n-drop right now
     let { editingCategory } = this.state;
@@ -919,7 +904,7 @@ export class BudgetTable extends React.Component {
               paddingRight: 14,
               backgroundColor: 'white',
               borderBottomWidth: 1,
-              borderColor: colors.n9
+              borderColor: colors.n9,
             }}
           >
             {type === 'report' ? (
@@ -939,7 +924,7 @@ export class BudgetTable extends React.Component {
                 type="financial"
                 style={[
                   styles.smallText,
-                  { color: colors.n1, textAlign: 'right', fontWeight: '500' }
+                  { color: colors.n1, textAlign: 'right', fontWeight: '500' },
                 ]}
                 formatter={value => {
                   return format(-parseFloat(value || '0'), 'financial');
@@ -953,7 +938,7 @@ export class BudgetTable extends React.Component {
                 type="financial"
                 style={[
                   styles.smallText,
-                  { color: colors.n1, textAlign: 'right', fontWeight: '500' }
+                  { color: colors.n1, textAlign: 'right', fontWeight: '500' },
                 ]}
               />
             </View>
@@ -994,7 +979,7 @@ export class BudgetTable extends React.Component {
               //     scrollRef,
               //     onScroll
               //   }) => (
-              <React.Fragment>
+              <>
                 <View>
                   <BudgetGroups
                     categoryGroups={categoryGroups}
@@ -1009,7 +994,7 @@ export class BudgetTable extends React.Component {
                 </View>
 
                 {/* <DragDropHighlight /> */}
-              </React.Fragment>
+              </>
               //   )}
               // </DragDrop>
             )}
@@ -1029,7 +1014,7 @@ function UnconnectedBudgetHeader({
   onPrevMonth,
   onNextMonth,
   sync,
-  localPrefs
+  localPrefs,
 }) {
   // let [menuOpen, setMenuOpen] = useState(false);
 
@@ -1050,7 +1035,7 @@ function UnconnectedBudgetHeader({
   let buttonStyle = {
     paddingLeft: 15,
     paddingRight: 15,
-    backgroundColor: 'transparent'
+    backgroundColor: 'transparent',
   };
 
   return (
@@ -1061,7 +1046,7 @@ function UnconnectedBudgetHeader({
         flexShrink: 0,
         height: 50,
         justifyContent: 'center',
-        backgroundColor: colors.p5
+        backgroundColor: colors.p5,
       }}
     >
       {!editMode && (
@@ -1075,8 +1060,8 @@ function UnconnectedBudgetHeader({
             {
               left: 0,
               opacity: prevEnabled ? 1 : 0.6,
-              padding: '5px 30px 5px 0'
-            }
+              padding: '5px 30px 5px 0',
+            },
           ]}
         >
           <ArrowThinLeft style={{ color: colors.n11 }} width="15" height="15" />
@@ -1089,11 +1074,12 @@ function UnconnectedBudgetHeader({
             marginTop: 12,
             marginBottom: 12,
             color: colors.n11,
-            textAlign: 'center'
+            textAlign: 'center',
             // zIndex: -1
-          }
+          },
         ]}
       >
+        {/* eslint-disable-next-line rulesdir/typography */}
         {monthUtils.format(currentMonth, "MMMM ''yy")}
       </Text>
       {editMode ? (
@@ -1102,12 +1088,12 @@ function UnconnectedBudgetHeader({
           onClick={onDone}
           style={[
             buttonStyle,
-            { position: 'absolute', top: 0, bottom: 0, right: 0 }
+            { position: 'absolute', top: 0, bottom: 0, right: 0 },
           ]}
           textStyle={{
             color: colors.n11,
             fontSize: 15,
-            fontWeight: '500'
+            fontWeight: '500',
           }}
         >
           Done
@@ -1136,7 +1122,7 @@ function UnconnectedBudgetHeader({
               right: 0,
               backgroundColor: 'transparent',
               paddingLeft: 12,
-              paddingRight: 12
+              paddingRight: 12,
             }}
             localPrefs={localPrefs}
             onSync={sync}
@@ -1184,7 +1170,7 @@ function UnconnectedBudgetHeader({
 
 const BudgetHeader = connect(
   state => ({
-    localPrefs: state.prefs.local
+    localPrefs: state.prefs.local,
   }),
-  actions
+  actions,
 )(UnconnectedBudgetHeader);

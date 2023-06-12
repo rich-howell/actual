@@ -3,10 +3,11 @@ import { connect } from 'react-redux';
 import { useTransition, animated } from 'react-spring';
 
 import * as actions from 'loot-core/src/client/actions';
-import { View, Text } from 'loot-design/src/components/common';
-import { colors, styles } from 'loot-design/src/style';
+
+import { colors, styles } from '../style';
 
 import AnimatedRefresh from './AnimatedRefresh';
+import { View, Text } from './common';
 
 function BankSyncStatus({ accountsSyncing }) {
   let name = accountsSyncing
@@ -15,11 +16,11 @@ function BankSyncStatus({ accountsSyncing }) {
       : accountsSyncing
     : null;
 
-  const transitions = useTransition(name, null, {
+  const transitions = useTransition(name, {
     from: { opacity: 0, transform: 'translateY(-100px)' },
     enter: { opacity: 1, transform: 'translateY(0)' },
     leave: { opacity: 0, transform: 'translateY(-100px)' },
-    unique: true
+    unique: true,
   });
 
   return (
@@ -31,13 +32,13 @@ function BankSyncStatus({ accountsSyncing }) {
         right: 0,
         marginTop: 5,
         alignItems: 'center',
-        zIndex: 501
+        zIndex: 501,
       }}
     >
-      {transitions.map(
-        ({ item, key, props }) =>
+      {transitions(
+        (style, item) =>
           item && (
-            <animated.div key={key} style={props}>
+            <animated.div key={item} style={style}>
               <View
                 style={{
                   borderRadius: 4,
@@ -46,7 +47,7 @@ function BankSyncStatus({ accountsSyncing }) {
                   padding: '5px 13px',
                   flexDirection: 'row',
                   alignItems: 'center',
-                  ...styles.shadow
+                  ...styles.shadow,
                 }}
               >
                 <AnimatedRefresh
@@ -56,7 +57,7 @@ function BankSyncStatus({ accountsSyncing }) {
                 <Text>Syncing {item}</Text>
               </View>
             </animated.div>
-          )
+          ),
       )}
     </View>
   );
@@ -64,7 +65,7 @@ function BankSyncStatus({ accountsSyncing }) {
 
 export default connect(
   state => ({
-    accountsSyncing: state.account.accountsSyncing
+    accountsSyncing: state.account.accountsSyncing,
   }),
-  actions
+  actions,
 )(BankSyncStatus);

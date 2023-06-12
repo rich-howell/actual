@@ -1,6 +1,9 @@
 let fs = require('fs');
 let path = require('path');
+
 let electron = require('electron');
+
+// eslint-disable-next-line import/extensions
 let backend = require('loot-core/lib-dist/bundle.desktop.js');
 
 function loadState() {
@@ -9,8 +12,8 @@ function loadState() {
     state = JSON.parse(
       fs.readFileSync(
         path.join(backend.lib.getDataDir(), 'window.json'),
-        'utf8'
-      )
+        'utf8',
+      ),
     );
   } catch (e) {
     console.log('Could not load window state');
@@ -37,7 +40,7 @@ function saveState(win, state) {
   fs.writeFileSync(
     path.join(backend.lib.getDataDir(), 'window.json'),
     JSON.stringify(state),
-    'utf8'
+    'utf8',
   );
 }
 
@@ -123,9 +126,9 @@ async function get() {
       x: 100,
       y: 50,
       width: Math.min(1000, displayBounds.width - 100),
-      height: Math.min(700, displayBounds.width - 50)
+      height: Math.min(700, displayBounds.width - 50),
     },
-    state
+    state,
   );
 
   return state;
